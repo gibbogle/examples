@@ -1,0 +1,79 @@
+ Group name: LaplaceRegion
+ Shape.  Dimension=3, simplex(2;3)*simplex*simplex
+ #Scale factor sets= 1
+ l.simplex(2;3)*l.simplex*l.simplex, #Scale factors=4
+ #Nodes=           4
+ #Fields=1
+ 1) Coordinate, coordinate, rectangular cartesian, #Components=3
+   x.   l.simplex(2;3)*l.simplex*l.simplex, no modify, standard node based.
+#Nodes= 4
+1.  #Values=1
+Value indices:     1
+Scale factor indices:    1
+2.  #Values=1
+Value indices:     1
+Scale factor indices:    2
+3.  #Values=1
+Value indices:     1
+Scale factor indices:    3
+4.  #Values=1
+Value indices:     1
+Scale factor indices:    4
+ y.   l.simplex(2;3)*l.simplex*l.simplex, no modify, standard node based.
+#Nodes= 4
+1.  #Values=1
+Value indices:     1
+Scale factor indices:    1
+2.  #Values=1
+Value indices:     1
+Scale factor indices:    2
+3.  #Values=1
+Value indices:     1
+Scale factor indices:    3
+4.  #Values=1
+Value indices:     1
+Scale factor indices:    4
+ z.   l.simplex(2;3)*l.simplex*l.simplex, no modify, standard node based.
+#Nodes= 4
+1.  #Values=1
+Value indices:     1
+Scale factor indices:    1
+2.  #Values=1
+Value indices:     1
+Scale factor indices:    2
+3.  #Values=1
+Value indices:     1
+Scale factor indices:    3
+4.  #Values=1
+Value indices:     1
+Scale factor indices:    4
+Element: 1 0 0 
+Nodes: 
+1 4 8 3 
+Scale factors: 
+1 1 1 1  
+Element: 2 0 0 
+Nodes: 
+1 8 5 7 
+Scale factors: 
+1 1 1 1  
+Element: 3 0 0 
+Nodes: 
+6 1 5 7 
+Scale factors: 
+1 1 1 1  
+Element: 4 0 0 
+Nodes: 
+1 8 7 3 
+Scale factors: 
+1 1 1 1  
+Element: 5 0 0 
+Nodes: 
+6 1 7 2 
+Scale factors: 
+1 1 1 1  
+Element: 6 0 0 
+Nodes: 
+7 1 3 2 
+Scale factors: 
+1 1 1 1  
