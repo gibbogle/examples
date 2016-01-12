@@ -1,6 +1,0 @@
-Diagnostics.diag
-*.part*.exnode
-*.part*.exelem
-LaplaceExample.xml
-*.connectivity
-*.dofs.node

@@ -1,5 +1,5 @@
 gfx read node Diffusion_x4_y4_q_T1.part0.exnode
-gfx read element Diffusion_x4_y4_q_T1.part0.exelem generate
+gfx read element Diffusion_x4_y4_q_T1.part0.exelem
 gfx create window 1
 gfx modify window 1 view interest_point 0.5,0.5,0.0 eye_point 0.5,0.5,5.0 up_vector 0.0,1.0,0.0
 gfx modify spectrum default clear overwrite_colour;

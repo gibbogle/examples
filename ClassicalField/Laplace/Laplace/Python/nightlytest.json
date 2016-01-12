@@ -1,7 +1,0 @@
-{"example": {
-  "language": "python",
-  "script": "LaplaceExample.py",
-  "test": [   
-    {
-      "id": 1}]
-}}

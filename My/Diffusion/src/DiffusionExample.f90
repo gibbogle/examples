@@ -422,7 +422,7 @@ PROGRAM DIFFUSIONEXAMPLE
 !   meshname = 'example1'
    write(*,*) 'Enter the base name of the mesh files (e.g. zzzz if the files are zzzz-mesh, zzzz-nodes)'
    read(*,'(a)') meshname
-   CASE_2D = .false.    ! GB
+   CASE_2D = (index(meshname,'2D') /= 0)    ! GB
    INTERPOLATION_TYPE = 0
 #endif
   NUMBER_OF_DOMAINS=NumberOfComputationalNodes
@@ -584,7 +584,7 @@ PROGRAM DIFFUSIONEXAMPLE
   write(*,*) 'NumberOfNodes: ',NumberOfNodes
   do node = 1, NumberOfNodes
     source_value = 0.0_CMISSRP
-    if (node == 5) source_value = 10.0_CMISSRP
+    if (node == 5) source_value = 10.0_CMISSRP  ! in the 2D case node 5 is approx in the centre of the square
       CALL cmfe_Field_ParameterSetUpdateNode(RegionUserNumber,SourceFieldUserNumber, &
    &   CMFE_FIELD_U_VARIABLE_TYPE, &
    &   CMFE_FIELD_VALUES_SET_TYPE, &
@@ -725,21 +725,29 @@ PROGRAM DIFFUSIONEXAMPLE
 #if GENERATE_MESH
   CALL cmfe_SolverEquations_BoundaryConditionsAnalytic(SolverEquations,Err)
 #else
-  !Set the first node to 0.0 and the last node to 1.0
-  FirstNodeNumber=1
-  CALL cmfe_Nodes_Initialise(Nodes,Err)
-  CALL cmfe_Region_NodesGet(Region,Nodes,Err)
-  CALL cmfe_Nodes_NumberOfNodesGet(Nodes,LastNodeNumber,Err)
-  CALL cmfe_Decomposition_NodeDomainGet(Decomposition,FirstNodeNumber,1,FirstNodeDomain,Err)
-  CALL cmfe_Decomposition_NodeDomainGet(Decomposition,LastNodeNumber,1,LastNodeDomain,Err)
-  IF(FirstNodeDomain==ComputationalNodeNumber) THEN
-    CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,FirstNodeNumber,1, &
-      & CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)
-  ENDIF
-  IF(LastNodeDomain==ComputationalNodeNumber) THEN
-    CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,LastNodeNumber,1, &
-      & CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)  ! was 1.0
-  ENDIF
+  if (CASE_2D) then  ! nodes 1-4 are the four corners of the square - skip the domain checks
+    CALL cmfe_Nodes_Initialise(Nodes,Err)
+    do node = 1,4
+      CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,node,1, &
+        & CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)
+    enddo
+  else
+    !Set the first node to 0.0 and the last node to 1.0
+    FirstNodeNumber=1
+    CALL cmfe_Nodes_Initialise(Nodes,Err)
+    CALL cmfe_Region_NodesGet(Region,Nodes,Err)
+    CALL cmfe_Nodes_NumberOfNodesGet(Nodes,LastNodeNumber,Err)
+    CALL cmfe_Decomposition_NodeDomainGet(Decomposition,FirstNodeNumber,1,FirstNodeDomain,Err)
+    CALL cmfe_Decomposition_NodeDomainGet(Decomposition,LastNodeNumber,1,LastNodeDomain,Err)
+    IF(FirstNodeDomain==ComputationalNodeNumber) THEN
+      CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,FirstNodeNumber,1, &
+        & CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)
+    ENDIF
+    IF(LastNodeDomain==ComputationalNodeNumber) THEN
+      CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,LastNodeNumber,1, &
+        & CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)  ! was 1.0
+    ENDIF
+  endif
 #endif
   CALL cmfe_SolverEquations_BoundaryConditionsCreateFinish(SolverEquations,Err)
 

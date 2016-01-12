@@ -103,7 +103,7 @@ PROGRAM DIFFUSIONCONSTANTSOURCEEXAMPLE
   TYPE(cmfe_DecompositionType) :: Decomposition
   TYPE(cmfe_EquationsType) :: Equations
   TYPE(cmfe_EquationsSetType) :: EquationsSet
-  TYPE(cmfe_FieldType) :: GeometricField,EquationsSetField,DependentField,MaterialsField,SourceField,AnalyticField
+  TYPE(cmfe_FieldType) :: GeometricField, EquationsSetField, DependentField, MaterialsField, SourceField, AnalyticField
   TYPE(cmfe_FieldsType) :: Fields
   TYPE(cmfe_GeneratedMeshType) :: GeneratedMesh  
   TYPE(cmfe_MeshType) :: Mesh
@@ -115,6 +115,7 @@ PROGRAM DIFFUSIONCONSTANTSOURCEEXAMPLE
 
   LOGICAL :: EXPORT_FIELD,IMPORT_FIELD
  
+#define IS_ANALYTIC 1
 
 #ifdef WIN32
   !Quickwin type
@@ -242,8 +243,8 @@ PROGRAM DIFFUSIONCONSTANTSOURCEEXAMPLE
   
   !Create the equations_set
   CALL cmfe_EquationsSet_Initialise(EquationsSet,Err)
-    CALL cmfe_Field_Initialise(EquationsSetField,Err)
-CALL cmfe_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,[CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS, &
+  CALL cmfe_Field_Initialise(EquationsSetField,Err)
+  CALL cmfe_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,[CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS, &
   & CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE], &
   & EquationsSetFieldUserNumber,EquationsSetField,EquationsSet,Err)
   !Set the equations set to be a standard Laplace problem
@@ -269,6 +270,7 @@ CALL cmfe_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,
   !Finish the equations set dependent field variables
   CALL cmfe_EquationsSet_SourceCreateFinish(EquationsSet,Err)
 
+#if IS_ANALYTIC
   !Create the equations set analytic field variables
   CALL cmfe_Field_Initialise(AnalyticField,Err)
   CALL cmfe_EquationsSet_AnalyticCreateStart(EquationsSet,CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1, &
@@ -276,6 +278,7 @@ CALL cmfe_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,
     & AnalyticField,Err)
   !Finish the equations set analytic field variables
   CALL cmfe_EquationsSet_AnalyticCreateFinish(EquationsSet,Err)
+#endif
 
   !Create the equations set equations
   CALL cmfe_Equations_Initialise(Equations,Err)
@@ -289,8 +292,9 @@ CALL cmfe_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,
   !CALL cmfe_Equations_OutputTypeSet(Equations,CMFE_EQUATIONS_ELEMENT_MATRIX_OUTPUT,Err)
   !Finish the equations set equations
   CALL cmfe_EquationsSet_EquationsCreateFinish(EquationsSet,Err)
-  
-  !Create the equations set boundary conditions
+
+!  write(*,*) 'cmfe_BoundaryConditions_Initialise'
+!  !Create the equations set boundary conditions
 !   CALL cmfe_BoundaryConditions_Initialise(BoundaryConditions,Err)
 !   CALL cmfe_EquationsSetBoundaryConditionsCreateStart(EquationsSet,BoundaryConditions,Err)
 !   !Set the first node to 0.0 and the last node to 1.0
@@ -306,9 +310,6 @@ CALL cmfe_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,
 ! !     & CMFE_BOUNDARY_CONDITION_FIXED,1.0_CMISSRP,Err)
 !   !Finish the creation of the equations set boundary conditions
 !   CALL cmfe_EquationsSetBoundaryConditionsCreateFinish(EquationsSet,Err)
-
-
-
 
   !Create the problem
   CALL cmfe_Problem_Initialise(Problem,Err)
@@ -366,23 +367,61 @@ CALL cmfe_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,
   !Finish the creation of the problem solver equations
   CALL cmfe_Problem_SolverEquationsCreateFinish(Problem,Err)
 
+#if IS_ANALYTIC
+  write(*,*) 'cmfe_BoundaryConditions_Initialise analytic'
   CALL cmfe_BoundaryConditions_Initialise(BoundaryConditions,Err)
   CALL cmfe_SolverEquations_BoundaryConditionsCreateStart(SolverEquations,BoundaryConditions,Err)
   CALL cmfe_SolverEquations_BoundaryConditionsAnalytic(SolverEquations,Err)
+!  CALL cmfe_BoundaryConditions_AddConstant( &
+!     BoundaryConditions, & !/*<The boundary conditions to add the constant to. */,                                                               const cmfe_BoundaryConditionsType
+!     field, &              !/*<The dependent field to set the boundary condition on. */,                                                         const cmfe_FieldType
+!     variableType, &       !/*<The variable type of the dependent field to set the boundary condition at. \see OPENCMISS_FieldVariableTypes */,  const int 
+!     componentNumber, &    !/*<The component number of the dependent field to set the boundary condition at. */,                                 const int
+!     condition, &          !/*<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS */,                           const int
+!     value)                !/*<The value of the boundary condition to add. */);                                                                  const double
   CALL cmfe_SolverEquations_BoundaryConditionsCreateFinish(SolverEquations,Err)
+#else
+  write(*,*) 'cmfe_BoundaryConditions_Initialise'
+  !Create the equations set boundary conditions
+   CALL cmfe_BoundaryConditions_Initialise(BoundaryConditions,Err)
+   CALL cmfe_SolverEquations_BoundaryConditionsCreateStart(SolverEquations,BoundaryConditions,Err)
+   !Set the first node to 0.0 and the last node to 1.0
+   FirstNodeNumber=1
+   IF(NUMBER_GLOBAL_Z_ELEMENTS==0) THEN
+     LastNodeNumber=(NUMBER_GLOBAL_X_ELEMENTS+1)*(NUMBER_GLOBAL_Y_ELEMENTS+1)
+   ELSE
+     LastNodeNumber=(NUMBER_GLOBAL_X_ELEMENTS+1)*(NUMBER_GLOBAL_Y_ELEMENTS+1)*(NUMBER_GLOBAL_Z_ELEMENTS+1)
+   ENDIF
+!    CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,CMFE_FIELD_U_VARIABLE_TYPE,1,FirstNodeNumber,1, &
+!      CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)
+!    CALL cmfe_BoundaryConditions_AddConstant(BoundaryConditions, DependentField, CMFE_FIELD_U_VARIABLE_TYPE, &
+!      1, CMFE_BOUNDARY_CONDITION_FIXED, 1.0, Err)
+ !   CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,CMFE_FIELD_DELUDELN_VARIABLE_TYPE,1,LastNodeNumber,1, &
+ !     & CMFE_BOUNDARY_CONDITION_FIXED,1.0_CMISSRP,Err)
+  !Finish the creation of the equations set boundary conditions
+  CALL cmfe_SolverEquations_BoundaryConditionsCreateFinish(SolverEquations,Err)
+
+#endif
 
   !Solve the problem
   CALL cmfe_Problem_Solve(Problem,Err)
 
+#if IS_ANALYTIC
   !Output Analytic analysis
   CALL cmfe_AnalyticAnalysis_Output(DependentField,"DiffusionAnalytics_x10_y10_z10_L_T1",Err)
+#endif
 
-  EXPORT_FIELD=.TRUE.
+  EXPORT_FIELD=.FALSE.
   IF(EXPORT_FIELD) THEN
     CALL cmfe_Fields_Initialise(Fields,Err)
     CALL cmfe_Fields_Create(Region,Fields,Err)
+#if IS_ANALYTIC
     CALL cmfe_Fields_NodesExport(Fields,"DiffusionConstantSourceAnalytic_x10_y10_z10_L_T1","FORTRAN",Err)
     CALL cmfe_Fields_ElementsExport(Fields,"DiffusionConstantSourceAnalytic_x10_y10_z10_L_T1","FORTRAN",Err)
+#else
+    CALL cmfe_Fields_NodesExport(Fields,"DiffusionConstantSource","FORTRAN",Err)
+    CALL cmfe_Fields_ElementsExport(Fields,"DiffusionConstantSource","FORTRAN",Err)
+#endif
     CALL cmfe_Fields_Finalise(Fields,Err)
 
   ENDIF
