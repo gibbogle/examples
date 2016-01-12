@@ -175,13 +175,14 @@ MODULE IOSTUFF
               elseif (NumberOfMeshDimensions == 3) then
                   lnn = 4
                   CALL cmfe_Basis_InterpolationXiSet(Bases(basisn),[InterpolationType,InterpolationType,InterpolationType],Err)
-                  write(*,*) 'cmfe_Basis_QuadratureOrderSet'
-                  CALL cmfe_Basis_QuadratureOrderSet(Bases(basisn),3,Err)
+                  write(*,*) 'did cmfe_Basis_InterpolationXiSet'
+!                  write(*,*) 'cmfe_Basis_QuadratureOrderSet'
+!                  CALL cmfe_Basis_QuadratureOrderSet(Bases(basisn),3,Err)
               endif
           endif
-          if (NumberOfMeshDimensions == 3) then
-              CALL cmfe_Basis_QuadratureLocalFaceGaussEvaluateSet(Bases(basisn),.true.,Err)
-          endif
+!          if (NumberOfMeshDimensions == 3) then
+!              CALL cmfe_Basis_QuadratureLocalFaceGaussEvaluateSet(Bases(basisn),.true.,Err)
+!          endif
           CALL cmfe_Basis_CreateFinish(Bases(basisn),Err)
           ! element definition now
           do
@@ -199,7 +200,7 @@ MODULE IOSTUFF
           CALL cmfe_MeshElements_CreateStart(Mesh,compn,Bases(basisn),Elements(compn),Err)
           do i=1,NumberOfElements
             read(fid,*,end=777,err=999) el(1:lnn)
-            write(*,*) 'cmfe_MeshElements_NodesSet: elem: ',i,el(1:lnn)
+!            write(*,*) 'cmfe_MeshElements_NodesSet: elem: ',i,el(1:lnn)
             CALL cmfe_MeshElements_NodesSet(Elements(compn),i,el(1:lnn),Err)
           enddo
           CALL cmfe_MeshElements_CreateFinish(Elements(compn),Err)
@@ -583,7 +584,7 @@ PROGRAM DIFFUSIONEXAMPLE
   write(*,*) 'NumberOfNodes: ',NumberOfNodes
   do node = 1, NumberOfNodes
     source_value = 0.0_CMISSRP
-    if (node == 2) source_value = 5.0_CMISSRP
+    if (node == 5) source_value = 10.0_CMISSRP
       CALL cmfe_Field_ParameterSetUpdateNode(RegionUserNumber,SourceFieldUserNumber, &
    &   CMFE_FIELD_U_VARIABLE_TYPE, &
    &   CMFE_FIELD_VALUES_SET_TYPE, &
@@ -674,7 +675,7 @@ PROGRAM DIFFUSIONEXAMPLE
 #if GENERATE_MESH
   CALL cmfe_ControlLoop_TimesSet(ControlLoop,0.0_CMISSRP,1.001_CMISSRP,0.001_CMISSRP,Err)
 #else
-  CALL cmfe_ControlLoop_TimesSet(ControlLoop,0.0_CMISSRP,1.01_CMISSRP,0.01_CMISSRP,Err)
+  CALL cmfe_ControlLoop_TimesSet(ControlLoop,0.0_CMISSRP,10.01_CMISSRP,0.01_CMISSRP,Err)  ! OK for 2D case
 #endif
   !Finish creating the problem control loop
   CALL cmfe_Problem_ControlLoopCreateFinish(Problem,Err)
@@ -737,7 +738,7 @@ PROGRAM DIFFUSIONEXAMPLE
   ENDIF
   IF(LastNodeDomain==ComputationalNodeNumber) THEN
     CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,LastNodeNumber,1, &
-      & CMFE_BOUNDARY_CONDITION_FIXED,1.0_CMISSRP,Err)
+      & CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)  ! was 1.0
   ENDIF
 #endif
   CALL cmfe_SolverEquations_BoundaryConditionsCreateFinish(SolverEquations,Err)
