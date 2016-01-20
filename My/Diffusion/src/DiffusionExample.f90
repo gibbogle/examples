@@ -54,6 +54,8 @@ MODULE IOSTUFF
 !GB
     INTEGER(CMISSIntg),parameter :: BASIS_TYPE_SIMPLEX = 1
     INTEGER(CMISSIntg),parameter :: BASIS_TYPE_LAGRANGE = 2
+    INTEGER :: nodeypos, x, y
+    REAL(16):: toler = 0.000001
 
   CONTAINS
 
@@ -535,9 +537,9 @@ PROGRAM DIFFUSIONEXAMPLE
   CALL cmfe_EquationsSet_Initialise(EquationsSet,Err)
   CALL cmfe_Field_Initialise(EquationsSetField,Err)
   CALL cmfe_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,[CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS, &
-!    & CMFE_EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE], &
-    & CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE], &
-    & EquationsSetFieldUserNumber,EquationsSetField,EquationsSet,Err)
+!    CMFE_EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE], &
+    CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE], &
+    EquationsSetFieldUserNumber,EquationsSetField,EquationsSet,Err)
   !Set the equations set to be a standard Diffusion constant source problem
   !Finish creating the equations set
   CALL cmfe_EquationsSet_CreateFinish(EquationsSet,Err)
@@ -548,8 +550,8 @@ PROGRAM DIFFUSIONEXAMPLE
   CALL cmfe_EquationsSet_Initialise(EquationsSet,Err)
   CALL cmfe_Field_Initialise(EquationsSetField,Err)
   CALL cmfe_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,[CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS, &
-  & CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE],EquationsSetFieldUserNumber, &
-  & EquationsSetField,EquationsSet,Err)
+   CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE],EquationsSetFieldUserNumber, &
+   EquationsSetField,EquationsSet,Err)
 !  !Set the equations set to be a standard Diffusion problem
   
 !  !Finish creating the equations set
@@ -577,18 +579,19 @@ PROGRAM DIFFUSIONEXAMPLE
   !Set up source field for reaction diffusion equation set. Setting source field to be 0.5 for this test across
   !across all nodes
   !CALL cmfe_FieldComponentValuesInitialise(SourceField,cmfe_FieldUVariableType,cmfe_FieldValuesSetType, &
-  ! & 1,0.5_CMISSRP,Err)
+  ! 1,0.5_CMISSRP,Err)
   !Set up source field for reaction diffusion as a nodally varying field. Zeros at the two ends, and 0.5 at middle node
   !node=2
   CALL cmfe_Nodes_NumberOfNodesGet(Nodes,NumberOfNodes,Err)
   write(*,*) 'NumberOfNodes: ',NumberOfNodes
   do node = 1, NumberOfNodes
     source_value = 0.0_CMISSRP
-    if (node == 5) source_value = 10.0_CMISSRP  ! in the 2D case node 5 is approx in the centre of the square
-      CALL cmfe_Field_ParameterSetUpdateNode(RegionUserNumber,SourceFieldUserNumber, &
-   &   CMFE_FIELD_U_VARIABLE_TYPE, &
-   &   CMFE_FIELD_VALUES_SET_TYPE, &
-   &   1,1,node,1,source_value,Err)
+    !if (node == 5) source_value = 10.0_CMISSRP  ! in the 2D case node 5 is approx in the centre of the square
+    if (node == 5) source_value = -20.0_CMISSRP
+    CALL cmfe_Field_ParameterSetUpdateNode(RegionUserNumber,SourceFieldUserNumber, &
+    CMFE_FIELD_U_VARIABLE_TYPE, &
+    CMFE_FIELD_VALUES_SET_TYPE, &
+    1,1,node,1,source_value,Err)
   enddo
 #endif
 
@@ -598,8 +601,8 @@ PROGRAM DIFFUSIONEXAMPLE
 !  IF(NUMBER_GLOBAL_Z_ELEMENTS==0) THEN  
   IF (CASE_2D) then
     CALL cmfe_EquationsSet_AnalyticCreateStart(EquationsSet,CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1, &
-      & AnalyticFieldUserNumber, &
-      & AnalyticField,Err)
+      AnalyticFieldUserNumber, &
+      AnalyticField,Err)
   ELSE
     WRITE(*,'(A)') "Three dimensions is not implemented."
     STOP
@@ -652,17 +655,17 @@ PROGRAM DIFFUSIONEXAMPLE
 !   NULLIFY(BOUNDARY_CONDITIONS)
 !   CALL EQUATIONS_SET_BOUNDARY_CONDITIONS_CREATE_START(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
 !   IF(MY_COMPUTATIONAL_NODE_NUMBER==first_local_rank) &
-!     & CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,FIELD_U_VARIABLE_TYPE,first_local_dof, &
-!     & BOUNDARY_CONDITION_FIXED,1.0_DP,ERR,ERROR,*999)
+!     CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,FIELD_U_VARIABLE_TYPE,first_local_dof, &
+!     BOUNDARY_CONDITION_FIXED,1.0_DP,ERR,ERROR,*999)
 !   IF(MY_COMPUTATIONAL_NODE_NUMBER==last_local_rank) &
-!     & CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,FIELD_DELUDELN_VARIABLE_TYPE,last_local_dof, &
-!     & BOUNDARY_CONDITION_FIXED,1.0_DP,ERR,ERROR,*999)
+!     CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,FIELD_DELUDELN_VARIABLE_TYPE,last_local_dof, &
+!     BOUNDARY_CONDITION_FIXED,1.0_DP,ERR,ERROR,*999)
 !   CALL EQUATIONS_SET_BOUNDARY_CONDITIONS_CREATE_FINISH(EQUATIONS_SET,ERR,ERROR,*999)
 
   !Create the problem
   CALL cmfe_Problem_Initialise(Problem,Err)
   CALL cmfe_Problem_CreateStart(ProblemUserNumber,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS,CMFE_PROBLEM_DIFFUSION_EQUATION_TYPE, &
-    & CMFE_PROBLEM_NO_SOURCE_DIFFUSION_SUBTYPE],Problem,Err)
+    CMFE_PROBLEM_NO_SOURCE_DIFFUSION_SUBTYPE],Problem,Err)
   !Finish the creation of a problem.
   CALL cmfe_Problem_CreateFinish(Problem,Err)
 
@@ -675,7 +678,7 @@ PROGRAM DIFFUSIONEXAMPLE
 #if GENERATE_MESH
   CALL cmfe_ControlLoop_TimesSet(ControlLoop,0.0_CMISSRP,1.001_CMISSRP,0.001_CMISSRP,Err)
 #else
-  CALL cmfe_ControlLoop_TimesSet(ControlLoop,0.0_CMISSRP,10.01_CMISSRP,0.01_CMISSRP,Err)  ! OK for 2D case
+  CALL cmfe_ControlLoop_TimesSet(ControlLoop,0.0_CMISSRP,2.01_CMISSRP,0.01_CMISSRP,Err)  ! OK for 2D case
 #endif
   !Finish creating the problem control loop
   CALL cmfe_Problem_ControlLoopCreateFinish(Problem,Err)
@@ -727,10 +730,21 @@ PROGRAM DIFFUSIONEXAMPLE
 #else
   if (CASE_2D) then  ! nodes 1-4 are the four corners of the square - skip the domain checks
     CALL cmfe_Nodes_Initialise(Nodes,Err)
-    do node = 1,4
-      CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,node,1, &
-        & CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)
+!    do node = 1,4
+!      CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,node,1, &
+!        CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)
+!    enddo
+    do node = 1, NumberOfNodes
+      if ((node == 1) .OR. (node == 3) .OR. (node == 6) .OR. (node == 13)) then
+         CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,node,1, &
+           CMFE_BOUNDARY_CONDITION_FIXED,5.0_CMISSRP,Err)
+      endif
+      if ((node == 44) .OR. (node == 48) .OR. (node == 81) .OR. (node == 96)) then 
+         CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,node,1, &
+           CMFE_BOUNDARY_CONDITION_FIXED,5.0_CMISSRP,Err)
+      endif
     enddo
+   !!!!!
   else
     !Set the first node to 0.0 and the last node to 1.0
     FirstNodeNumber=1
@@ -741,11 +755,11 @@ PROGRAM DIFFUSIONEXAMPLE
     CALL cmfe_Decomposition_NodeDomainGet(Decomposition,LastNodeNumber,1,LastNodeDomain,Err)
     IF(FirstNodeDomain==ComputationalNodeNumber) THEN
       CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,FirstNodeNumber,1, &
-        & CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)
+        CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)
     ENDIF
     IF(LastNodeDomain==ComputationalNodeNumber) THEN
       CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,LastNodeNumber,1, &
-        & CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)  ! was 1.0
+        CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)  ! was 1.0
     ENDIF
   endif
 #endif
@@ -778,13 +792,12 @@ PROGRAM DIFFUSIONEXAMPLE
 !   CALL CPU_TIMER(SYSTEM_CPU,STOP_SYSTEM_TIME,ERR,ERROR,*999)
 ! 
 !   CALL WRITE_STRING_TWO_VALUE(GENERAL_OUTPUT_TYPE,"User time = ",STOP_USER_TIME(1)-START_USER_TIME(1),", System time = ", &
-!     & STOP_SYSTEM_TIME(1)-START_SYSTEM_TIME(1),ERR,ERROR,*999)
+!     STOP_SYSTEM_TIME(1)-START_SYSTEM_TIME(1),ERR,ERROR,*999)
 !   
   !CALL CMFE_FINALISE(ERR,ERROR,*999)
   !CALL cmfe_Finalise(Err)
   WRITE(*,'(A)') "Program successfully completed."
   
-
   STOP
   
 END PROGRAM DIFFUSIONEXAMPLE
